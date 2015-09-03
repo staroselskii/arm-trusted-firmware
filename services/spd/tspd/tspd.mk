@@ -55,7 +55,7 @@ NEED_BL32		:=	yes
 
 # Flag used to enable routing of non-secure interrupts to EL3 when they are
 # generated while the code is executing in S-EL1/0.
-TSPD_ROUTE_IRQ_TO_EL3	:=	0
+TSP_NS_INT_ASYNC_PREEMPT	:=	0
 
-$(eval $(call assert_boolean,TSPD_ROUTE_IRQ_TO_EL3))
-$(eval $(call add_define,TSPD_ROUTE_IRQ_TO_EL3))
+$(eval $(call assert_boolean,TSP_NS_INT_ASYNC_PREEMPT))
+$(eval $(call add_define,TSP_NS_INT_ASYNC_PREEMPT))
