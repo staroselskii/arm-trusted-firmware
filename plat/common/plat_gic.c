@@ -27,7 +27,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <arm_gic.h>
+#include <arm_gicv3.h>
+#include <platform.h>
 
 /*
  * The following platform GIC functions are weakly defined. They
@@ -43,31 +44,31 @@
 
 uint32_t plat_ic_get_pending_interrupt_id(void)
 {
-	return arm_gic_get_pending_interrupt_id();
+	return arm_gicv3_get_pending_interrupt_id();
 }
 
 uint32_t plat_ic_get_pending_interrupt_type(void)
 {
-	return arm_gic_get_pending_interrupt_type();
+	return arm_gicv3_get_pending_interrupt_type();
 }
 
 uint32_t plat_ic_acknowledge_interrupt(void)
 {
-	return arm_gic_acknowledge_interrupt();
+	return arm_gicv3_acknowledge_interrupt();
 }
 
 uint32_t plat_ic_get_interrupt_type(uint32_t id)
 {
-	return arm_gic_get_interrupt_type(id);
+	return arm_gicv3_get_interrupt_type(id, plat_my_core_pos());
 }
 
 void plat_ic_end_of_interrupt(uint32_t id)
 {
-	arm_gic_end_of_interrupt(id);
+	arm_gicv3_end_of_interrupt(id);
 }
 
 uint32_t plat_interrupt_type_to_line(uint32_t type,
 				uint32_t security_state)
 {
-	return arm_gic_interrupt_type_to_line(type, security_state);
+	return arm_gicv3_interrupt_type_to_line(type, security_state);
 }

@@ -30,7 +30,7 @@
 
 #include <arm_config.h>
 #include <arm_def.h>
-#include <arm_gic.h>
+#include <arm_gicv3.h>
 #include <cci.h>
 #include <debug.h>
 #include <mmio.h>
@@ -111,28 +111,42 @@ ARM_CASSERT_MMAP
 
 
 #if IMAGE_BL31 || IMAGE_BL32
-/* Array of secure interrupts to be configured by the gic driver */
-const unsigned int irq_sec_array[] = {
+/* Array of Group1 secure interrupts to be configured by the gic driver */
+const unsigned int g1s_interrupt_array[] = {
 	ARM_IRQ_SEC_PHY_TIMER,
-	ARM_IRQ_SEC_SGI_0,
 	ARM_IRQ_SEC_SGI_1,
 	ARM_IRQ_SEC_SGI_2,
 	ARM_IRQ_SEC_SGI_3,
 	ARM_IRQ_SEC_SGI_4,
 	ARM_IRQ_SEC_SGI_5,
-	ARM_IRQ_SEC_SGI_6,
 	ARM_IRQ_SEC_SGI_7,
 	FVP_IRQ_TZ_WDOG,
 	FVP_IRQ_SEC_SYS_TIMER
 };
 
+/* Array of Group0 interrupts to be configured by the gic driver */
+const unsigned int g0_interrupt_array[] = {
+	ARM_IRQ_SEC_SGI_0,
+	ARM_IRQ_SEC_SGI_6
+};
+
+uintptr_t rdistif_base_addrs[PLATFORM_CORE_COUNT];
+
+arm_gicv3_driver_data_t plat_gic_data = {
+	.gicr_base = BASE_GICR_BASE,
+	.g0_interrupt_num = ARRAY_SIZE(g0_interrupt_array),
+	.g1s_interrupt_num = ARRAY_SIZE(g1s_interrupt_array),
+	.g0_interrupt_array = g0_interrupt_array,
+	.g1s_interrupt_array = g1s_interrupt_array,
+	.rdistif_num = PLATFORM_CORE_COUNT,
+	.rdistif_base_addrs = rdistif_base_addrs,
+	.mpidr_to_core_pos = plat_arm_calc_core_pos
+};
+
 void plat_arm_gic_init(void)
 {
-	arm_gic_init(arm_config.gicc_base,
-		arm_config.gicd_base,
-		BASE_GICR_BASE,
-		irq_sec_array,
-		ARRAY_SIZE(irq_sec_array));
+	plat_gic_data.gicd_base = arm_config.gicd_base;
+	arm_gicv3_driver_init(&plat_gic_data);
 }
 
 #endif

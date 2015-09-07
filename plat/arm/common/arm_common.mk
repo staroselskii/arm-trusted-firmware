@@ -91,9 +91,9 @@ BL2_SOURCES		+=	drivers/arm/tzc400/tzc400.c			\
 				plat/common/aarch64/platform_up_stack.S
 
 BL31_SOURCES		+=	drivers/arm/cci/cci.c				\
-				drivers/arm/gic/arm_gic.c			\
-				drivers/arm/gic/gic_v2.c			\
-				drivers/arm/gic/gic_v3.c			\
+				drivers/arm/gic/common/arm_gic_common.c		\
+				drivers/arm/gic/v3/arm_gicv3_main.c		\
+				drivers/arm/gic/v3/arm_gicv3_helpers.c		\
 				drivers/arm/tzc400/tzc400.c			\
 				plat/arm/common/arm_bl31_setup.c		\
 				plat/arm/common/arm_pm.c			\

@@ -31,7 +31,7 @@
 #include <arch.h>
 #include <arch_helpers.h>
 #include <arm_def.h>
-#include <arm_gic.h>
+#include <arm_gicv3.h>
 #include <assert.h>
 #include <bl_common.h>
 #include <cci.h>
@@ -201,7 +201,9 @@ void arm_bl31_platform_setup(void)
 
 	/* Initialize the gic cpu and distributor interfaces */
 	plat_arm_gic_init();
-	arm_gic_setup();
+	arm_gicv3_distif_init();
+	arm_gicv3_rdistif_init(plat_my_core_pos());
+	arm_gicv3_cpuif_init(plat_my_core_pos());
 
 #if RESET_TO_BL31
 	/*

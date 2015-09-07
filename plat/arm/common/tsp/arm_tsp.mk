@@ -29,8 +29,9 @@
 #
 
 # TSP source files common to ARM standard platforms
-BL32_SOURCES		+=	drivers/arm/gic/arm_gic.c			\
-				drivers/arm/gic/gic_v2.c			\
+BL32_SOURCES		+=	drivers/arm/gic/common/arm_gic_common.c		\
+				drivers/arm/gic/v3/arm_gicv3_main.c		\
+				drivers/arm/gic/v3/arm_gicv3_helpers.c		\
 				plat/arm/common/arm_topology.c			\
 				plat/arm/common/tsp/arm_tsp_setup.c		\
 				plat/common/aarch64/platform_mp_stack.S		\
