@@ -12,6 +12,7 @@ Contents :
 7.  [Preparing the images to run on FVP](#7--preparing-the-images-to-run-on-fvp)
 8.  [Running the software on FVP](#8--running-the-software-on-fvp)
 9.  [Running the software on Juno](#9--running-the-software-on-juno)
+10. [Modifications required for running linux in GICv3 mode](#10--modifications-required-for-running-linux-in-gicv3-mode)
 
 
 1.  Introduction
@@ -66,8 +67,13 @@ instructions on the [Linaro release notes][Linaro releases], section 2.2
 "Downloading the software sources" and section 2.3 "Downloading the filesystem
 binaries".
 
-Note: Both the LSK kernel or the latest tracking kernel can be used along the
+Note 1: Both the LSK kernel or the latest tracking kernel can be used along the
 ARM Trusted Firmware, choose the one that best suits your needs.
+
+Note 2: Currently to run tracking kernel in GICv3 mode, some modifications are
+required to the kernel and UEFI. Refer
+[here](#10--modifications-required-for-running-linux-in-gicv3-mode) for more
+details.
 
 The Trusted Firmware source code can then be found in the `arm-tf/` directory.
 This is the full git repository cloned from Github. The revision checked out by
@@ -1087,6 +1093,25 @@ Please refer to the [Juno Software Guide] to:
 *   Install and run the Juno binaries on the board
 *   Obtain any other Juno software information
 
+
+10.  Modifications required for running linux in GICv3 mode
+-----------------------------------------------------
+
+The linaro tracking kernel includes support for GICv3 by default, but it
+crashes during runtime in GICv3 mode due to an incorrect patch which needs to
+be removed. Use the `git revert` command to remove the commit with SHA ID
+1688ace31903d82dba17cc057a917c4f3ed0a5ce from the linaro tracking kernel.
+
+Also, the default FVP build of UEFI configures GICv3 in V2 legacy mode. This
+can be changed by setting the build flag
+`gArmTokenSpaceGuid.PcdArmGicV3WithV2Legacy` to FALSE in
+`uefi/edk2/ArmPlatformPkg/ArmVExpressPkg/ArmVExpress-FVP-AArch64.dsc`.
+
+Recompile both kernel and UEFI as mentioned in
+[Linaro release notes][Linaro releases], section 2.2.
+
+The GICv3 DTBs found in ARM Trusted Firmware source directory can be
+used to test the GICv3 kernel on the respective FVP models.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - -
 
