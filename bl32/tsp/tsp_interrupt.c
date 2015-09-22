@@ -67,6 +67,25 @@ void tsp_update_sync_fiq_stats(uint32_t type, uint64_t elr_el3)
 #endif
 }
 
+/******************************************************************************
+ * This function is invoked when a non S-EL1 interrupt is received and causes
+ * the pre-emption of TSP. This function returns TSP_PREEMPTED and results
+ * in the control being handed over to EL3 for handling the interrupt.
+ *****************************************************************************/
+int32_t tsp_pre_empt_int_received(void)
+{
+	uint32_t linear_id = plat_my_core_pos();
+
+	tsp_stats[linear_id].pre_empt_int_count++;
+#if LOG_LEVEL >= LOG_LEVEL_VERBOSE
+	spin_lock(&console_lock);
+	VERBOSE("TSP: cpu 0x%lx: %d pre-empt interrupt requests\n",
+		read_mpidr(), tsp_stats[linear_id].pre_empt_int_count);
+	spin_unlock(&console_lock);
+#endif
+	return TSP_PREEMPTED;
+}
+
 /*******************************************************************************
  * TSP FIQ handler called as a part of both synchronous and asynchronous
  * handling of FIQ interrupts. It returns 0 upon successfully handling a S-EL1
@@ -87,7 +106,7 @@ int32_t tsp_fiq_handler(void)
 
 	/* TSP can only handle the secure physical timer interrupt */
 	if (id != TSP_IRQ_SEC_PHY_TIMER)
-		return TSP_EL3_FIQ;
+		return tsp_pre_empt_int_received();
 
 	/*
 	 * Handle the interrupt. Also sanity check if it has been preempted by
@@ -109,19 +128,4 @@ int32_t tsp_fiq_handler(void)
 	spin_unlock(&console_lock);
 #endif
 	return 0;
-}
-
-int32_t tsp_irq_received(void)
-{
-	uint32_t linear_id = plat_my_core_pos();
-
-	tsp_stats[linear_id].irq_count++;
-#if LOG_LEVEL >= LOG_LEVEL_VERBOSE
-	spin_lock(&console_lock);
-	VERBOSE("TSP: cpu 0x%lx received irq\n", read_mpidr());
-	VERBOSE("TSP: cpu 0x%lx: %d irq requests\n",
-		read_mpidr(), tsp_stats[linear_id].irq_count);
-	spin_unlock(&console_lock);
-#endif
-	return TSP_PREEMPTED;
 }

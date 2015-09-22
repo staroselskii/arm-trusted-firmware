@@ -72,9 +72,16 @@ DEFINE_SVC_UUID(tsp_uuid,
 
 int32_t tspd_init(void);
 
+/*
+ * This helper function handles SEL1 pre-emption. The pre-emption could be due
+ * Non Secure interrupts or EL3 interrupts. In both the cases we context switch
+ * to the normal world and in case of EL3 interrupts, it will again be routed
+ * to EL3 which will get handled at the exception vectors.
+ */
 uint64_t tspd_handle_sp_preemption(void *handle)
 {
 	cpu_context_t *ns_cpu_context;
+	tsp_context_t *tsp_ctx = &tspd_sp_context[plat_my_core_pos()];
 	assert(handle == cm_get_context(SECURE));
 	cm_el1_sysregs_context_save(SECURE);
 	/* Get a reference to the non-secure context */
@@ -88,8 +95,21 @@ uint64_t tspd_handle_sp_preemption(void *handle)
 	cm_el1_sysregs_context_restore(NON_SECURE);
 	cm_set_next_eret_context(NON_SECURE);
 
-	SMC_RET1(ns_cpu_context, SMC_PREEMPTED);
+	/*
+	 * We need to restore non secure context according to
+	 * the SEL1 context which got pre-empted. If a STD
+	 * SMC was ongoing, then return SMC_PREEMPTED in x0
+	 * and restore non secure context.
+	 */
+	if (get_std_smc_active_flag(tsp_ctx->state)) {
+		SMC_RET1(ns_cpu_context, SMC_PREEMPTED);
+	}
+
+
+	/* S-EL1 is pre-empted due to a EL3 interrupt */
+	SMC_RET0(ns_cpu_context);
 }
+
 /*******************************************************************************
  * This function is the handler registered for S-EL1 interrupts by the TSPD. It
  * validates the interrupt and upon success arranges entry into the TSP at
@@ -365,35 +385,6 @@ uint64_t tspd_smc_handler(uint32_t smc_fid,
 
 		SMC_RET0((uint64_t) ns_cpu_context);
 
-
-	/*
-	 * This function ID is used only by the TSP to indicate that it was
-	 * interrupted due to a EL3 FIQ interrupt. Execution should resume
-	 * in the normal world.
-	 */
-	case TSP_EL3_FIQ:
-		if (ns)
-			SMC_RET1(handle, SMC_UNK);
-
-		assert(handle == cm_get_context(SECURE));
-
-		/* Assert that standard SMC execution has been preempted */
-		assert(get_std_smc_active_flag(tsp_ctx->state));
-
-		/* Save the secure system register state */
-		cm_el1_sysregs_context_save(SECURE);
-
-		/* Get a reference to the non-secure context */
-		ns_cpu_context = cm_get_context(NON_SECURE);
-		assert(ns_cpu_context);
-
-		/* Restore non-secure state */
-		cm_el1_sysregs_context_restore(NON_SECURE);
-		cm_set_next_eret_context(NON_SECURE);
-
-		SMC_RET1(ns_cpu_context, TSP_EL3_FIQ);
-
-
 	/*
 	 * This function ID is used only by the SP to indicate it has
 	 * finished initialising itself after a cold boot
@@ -447,8 +438,7 @@ uint64_t tspd_smc_handler(uint32_t smc_fid,
 				panic();
 
 			/*
-			 * Disable the interrupt NS locally since it will be enabled globally
-			 * within cm_init_my_context.
+			 * Disable the NS interrupt locally.
 			 */
 			disable_intr_rm_local(INTR_TYPE_NS, SECURE);
 #endif
