@@ -40,6 +40,31 @@
 #define RUNTIME_ADDR	0x2d
 #define AXP803_HW_ADDR	0x3a3
 
+static int axp803_set_cpu_voltage(int millivolt)
+{
+	uint8_t reg;
+
+	if (millivolt <= 0) {			/* power off system */
+		sunxi_rsb_write(0x32, sunxi_rsb_read(0x32) | 0x80);
+		return 0;			/* hopefully not ... */
+	}
+
+	if (millivolt < 800 || millivolt > 1300)
+		return -1;
+
+	if (millivolt > 1200)
+		reg = (millivolt - 1200) / 20 + 70;
+	else
+		reg = (millivolt - 500) / 10 + 0;
+
+	sunxi_rsb_write(0x21, reg);	/* DCDC2 */
+
+	while (!(sunxi_rsb_read(0x21) & 0x80))
+		;
+
+	return 0;
+}
+
 /*
  * Initial PMIC setup for boards using the AXP803 PMIC.
  * DCDC1 must be corrected to 3.3 volts. Also we enable:
@@ -106,6 +131,11 @@ static int axp803_initial_setup(void)
  
 	sunxi_rsb_write(0x15, 0x1a);	/* DLDO1 = VCC3V3_HDMI voltage = 3.3V */
 
+	ret = sunxi_rsb_read(0x14);
+	sunxi_rsb_write(0x14, ret | 0x40);	/* DCDC2/3 dual phase */
+
+	axp803_set_cpu_voltage(1100);
+
 	return 0;
 }
 
@@ -146,6 +176,16 @@ static int axp803_probe(void)
 enum pmic_type {
 	PMIC_AXP803,
 } pmic_type;
+
+int sunxi_power_set_cpu_voltage(int millivolt)
+{
+	switch (pmic_type) {
+	case PMIC_AXP803:
+		return axp803_set_cpu_voltage(millivolt);
+	}
+
+	return -ENODEV;
+}
 
 int sunxi_power_setup(uint16_t socid)
 {

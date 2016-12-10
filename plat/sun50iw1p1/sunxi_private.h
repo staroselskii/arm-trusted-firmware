@@ -70,6 +70,8 @@ void sunxi_security_setup(void);
 /* Declarations for sunxi_power.c */
 int sunxi_power_setup(uint16_t socid);
 
+int sunxi_power_set_cpu_voltage(int millivolt);
+
 void udelay(unsigned int delay);
 int sunxi_setup_clocks(uint16_t socid);
 
