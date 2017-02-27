@@ -71,6 +71,8 @@ void sunxi_security_setup(void);
 int sunxi_power_setup(uint16_t socid);
 
 int sunxi_power_set_cpu_voltage(int millivolt);
+unsigned int sunxi_pstate_get(uint16_t device);
+int sunxi_pstate_set(uint16_t device, int state);
 
 void udelay(unsigned int delay);
 int sunxi_setup_clocks(uint16_t socid);
