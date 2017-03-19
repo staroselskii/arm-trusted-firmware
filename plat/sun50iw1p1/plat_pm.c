@@ -259,7 +259,7 @@ static int32_t sunxi_affinst_suspend_finish(uint64_t mpidr,
  ******************************************************************************/
 static void __dead2 sunxi_system_off(void)
 {
-	sunxi_pmic_write(0x32, sunxi_pmic_read(0x32) | 0x80);
+	sunxi_rsb_write(0x32, sunxi_rsb_read(0x32) | 0x80);
 	ERROR("PSCI system shutdown: still alive ...\n");
 
 	wfi();
