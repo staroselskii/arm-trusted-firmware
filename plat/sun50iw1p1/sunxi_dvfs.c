@@ -15,7 +15,19 @@ struct op_points
 	{1008, 1200}, {1056, 1240}, {1104, 1260}, {1152, 1300}
 };
 
+/*
+ * To avoid higher operation points, which may not be sustainable without
+ * a good power supply and some cooling, you can limit the number of advertised
+ * operation points here by #defining NR_OPP to some number, overriding the
+ * default of using the whole set as defined above.
+ * Setting NR_OPP to 6, for instance, would make 1008 MHz the highest
+ * frequency.
+ */
+//#define NR_OPP 6
+
+#ifndef NR_OPP
 #define NR_OPP (sizeof(sunxi_op_points) / sizeof(sunxi_op_points[0]))
+#endif
 
 int current_opp_index = 2;
 int current_opp_limit = NR_OPP;
