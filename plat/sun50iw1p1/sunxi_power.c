@@ -31,6 +31,7 @@
 #include <debug.h>
 #include <plat_config.h>
 #include <mmio.h>
+#include <string.h>
 #include <sys/errno.h>
 #include "sunxi_def.h"
 #include "sunxi_private.h"
@@ -76,7 +77,7 @@ static int axp803_set_cpu_voltage(int millivolt)
  * Also this contains a quirk to fix the DRAM voltage on Pine64 boards,
  * which have a wrong default (1.24V instead of 1.36V).
  */
-static int axp803_initial_setup(void)
+static int axp803_initial_setup(const char *dt_name)
 {
 	int ret;
 
@@ -123,10 +124,12 @@ static int axp803_initial_setup(void)
 	 * changes. This should be further confined once we are able to
 	 * reliably detect a Pine64 board.
 	 */
-	ret = sunxi_rsb_read(0x24);	/* read DCDC5 register */
-	if ((ret & 0x7f) == 0x26) {	/* check for 1.24V value */
-		NOTICE("PMIC: fixing DRAM voltage from 1.24V to 1.36V\n");
-		sunxi_rsb_write(0x24, 0x2c);
+	if (!strcmp(dt_name, "sun50i-a64-pine64-plus")) {
+		ret = sunxi_rsb_read(0x24);	/* read DCDC5 register */
+		if ((ret & 0x7f) == 0x26) {	/* check for 1.24V value */
+			NOTICE("PMIC: fixing DRAM voltage from 1.24V to 1.36V\n");
+			sunxi_rsb_write(0x24, 0x2c);
+		}
 	}
  
 	sunxi_rsb_write(0x15, 0x1a);	/* DLDO1 = VCC3V3_HDMI voltage = 3.3V */
@@ -319,7 +322,7 @@ int sunxi_pstate_set(uint16_t device, int state)
 	return -EINVAL;
 }
 
-int sunxi_power_setup(uint16_t socid)
+int sunxi_power_setup(uint16_t socid, const char *dt_name)
 {
 	int ret;
 
@@ -333,7 +336,7 @@ int sunxi_power_setup(uint16_t socid)
 			ERROR("PMIC: AXP803 initialization failed: %d\n", ret);
 			return ret;
 		}
-		ret = axp803_initial_setup();
+		ret = axp803_initial_setup(dt_name);
 		if (ret) {
 			ERROR("PMIC: AXP803 power setup failed: %d\n", ret);
 			return ret;

@@ -68,7 +68,7 @@ void sunxi_io_setup(void);
 void sunxi_security_setup(void);
 
 /* Declarations for sunxi_power.c */
-int sunxi_power_setup(uint16_t socid);
+int sunxi_power_setup(uint16_t socid, const char *dt_name);
 
 int sunxi_power_set_cpu_voltage(int millivolt);
 unsigned int sunxi_pstate_get(uint16_t device);
