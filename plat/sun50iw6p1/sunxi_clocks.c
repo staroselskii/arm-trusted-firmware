@@ -33,9 +33,11 @@
 #include <ccmu.h>
 #include "sunxi_private.h"
 
-#define PLL_CPUX_1008MHZ    0x1410
-#define PLL_CPUX_816MHZ     0x1010
+#define PLL_CPUX_1008MHZ    0x2900
+#define PLL_CPUX_816MHZ     0x2100
 #define PLL_CPUX_408MHZ     0x1000
+
+#define PLL_LOCK_TIME	    (0x2UL << 24)
 
 static void mmio_clrsetbits32(uintptr_t addr, uint32_t mask, uint32_t bits)
 {
@@ -70,8 +72,8 @@ int sunxi_setup_clocks(uint16_t socid)
 
 	/* Avoid reprogramming PERIPH0 if not necessary */
 	reg = mmio_read_32(CCMU_PLL_PERIPH0_CTRL_REG);
-	if ((reg & 0x0fffffff) != 0x41811)		/* is not at 600 MHz? */
-		mmio_write_32(CCMU_PLL_PERIPH0_CTRL_REG, 0x80041811);
+	if ((reg & 0x0ffff) != 0x6300)		/* is not at 600 MHz? */
+		mmio_write_32(CCMU_PLL_PERIPH0_CTRL_REG, 0xa0006300);
 
 	/* Set up dividers (suitable for the target clock frequency)
 	   and switch CPUX (and thus AXI & APB) to the LOSC24 clock */
@@ -81,7 +83,7 @@ int sunxi_setup_clocks(uint16_t socid)
 	udelay(20);
 
 	/* Set to 816MHz, but don't enable yet. */
-	mmio_write_32(CCMU_PLL_CPUX_CTRL_REG, PLL_CPUX_816MHZ);
+	mmio_write_32(CCMU_PLL_CPUX_CTRL_REG, PLL_CPUX_816MHZ | PLL_LOCK_TIME);
 
 	/* Enable PLL_CPUX again */
 	mmio_setbits32(CCMU_PLL_CPUX_CTRL_REG, PLL_ENABLE_BIT);
@@ -98,10 +100,14 @@ int sunxi_setup_clocks(uint16_t socid)
 	/* Wait 1000us, because Allwiner does so... */
 	udelay(1000);
 
-	/* AHB1 = PERIPH0 / (3 * 1) = 200MHz, APB1 = AHB1 / 2 */
-	mmio_write_32(CCMU_AHB1_APB1_CFG_REG, 0x00003180);
-	mmio_write_32(CCMU_APB2_CFG_GREG,     0x01000000); /* APB2 =>  24 MHz */
-	mmio_write_32(CCMU_AHB2_CFG_GREG,     0x00000001); /* AHB2 => 300 MHz */
+	/* AHB1/2 = PERIPH0 / (1 * 3) = 200MHz */
+	mmio_write_32(CCMU_AHB1_AHB2_CFG_REG, 0x03000002);
+	/* AHB3 = PERIPH0 / (2 * 1) = 300MHz    TODO: Really? Check! */
+//	mmio_write_32(CCMU_AHB3_CFG_REG,      0x03000100);
+	/* APB1 = PERIPH0 / (2 * 3) = 100MHz */
+	mmio_write_32(CCMU_APB1_CFG_REG,      0x03000102);
+	/* APB2 =>  24 MHz */
+	mmio_write_32(CCMU_APB2_CFG_REG,      0x00000000);
 
 	return 0;
 }

@@ -31,14 +31,12 @@
 #ifndef __SUNXI_DEF_H__
 #define __SUNXI_DEF_H__
 
-#define SUNXI_CCM_BASE			0x01c20000
-#define SUNXI_PIO_BASE			0x01c20800
-#define SUNXI_UART0_BASE		0x01c28000
-#define GICD_BASE			0x01c81000
-#define GICC_BASE			0x01c82000
+#define SUNXI_CCM_BASE			0x03001000
+#define SUNXI_PIO_BASE			0x0300b000
+#define SUNXI_UART0_BASE		0x05000000
+#define GICD_BASE			0x03021000
+#define GICC_BASE			0x03022000
 
-/* Firmware Image Package */
-#define FIP_IMAGE_NAME			"fip.bin"
 #define SUNXI_PRIMARY_CPU			0x0
 
 /* Memory location options for Shared data and TSP in sunxi */
@@ -52,16 +50,16 @@
 #define SUNXI_MAX_DRAM_SIZE           (2ull<<30)     /*2G*/
 
 /*
- * This puts ATF into SRAM A2. The first 16KB (@0x40000) are used by the
+ * This puts ATF into SRAM A2. The first 16KB (@0x100000) are used by the
  * OpenRISC exception vectors and are actually only sparsely implemented
  * to match the OpenRISC vector table layout (one word every 256 Bytes).
  * According to the manual SRAM A2 should be hardwired to be secure only,
- * but this is apparently not true.
+ * but this is apparently not true without having a fuse burnt.
  * This SRAM is tightly coupled to the OpenRISC controller, so it's not the
  * ideal place to put ATF into, but worked better than SRAM C for me.
  */
-#define SUNXI_TRUSTED_MONITOR_BASE	0x00044000	/* 16KB into SRAM A2 */
-#define SUNXI_TRUSTED_MONITOR_SIZE	(64 << 10)	/* 64 KByte */
+#define SUNXI_TRUSTED_MONITOR_BASE	0x00104000	/* 16KB into SRAM A2 */
+#define SUNXI_TRUSTED_MONITOR_SIZE	(80 << 10)	/* 80 KByte */
 
 //atf code limit
 #define SUNXI_TRUSTED_MONITOR_LIMIT	(SUNXI_TRUSTED_MONITOR_BASE + SUNXI_TRUSTED_MONITOR_SIZE)

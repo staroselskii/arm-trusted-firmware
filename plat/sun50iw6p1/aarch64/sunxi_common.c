@@ -57,11 +57,11 @@ plat_config_t plat_config;
 const mmap_region_t sunxi_mmap[] = {
 
 	// SRAM regions
-	{ 0x0010000,			0x0010000,
-		0x0030000,			MT_DEVICE | MT_RW | MT_NS },
-	// MMI/O region used by peripherals from 0x100.0000 to 0x200.0000
-	{ 0x1000000,			0x1000000,
-		0x1000000,			MT_DEVICE | MT_RW | MT_SECURE },
+	{ 0x00020000,			0x00020000,
+		0x00030000,			MT_DEVICE | MT_RW | MT_NS },
+	// MMI/O region used by peripherals from 0x0100.0000 to 0x1000.0000
+	{ 0x01000000,			0x01000000,
+		0x0f000000,			MT_DEVICE | MT_RW | MT_SECURE },
 	//2G
 	{ DRAM1_BASE,			DRAM1_BASE,
 		SUNXI_MAX_DRAM_SIZE,		MT_MEMORY | MT_RW | MT_NS},
@@ -141,7 +141,7 @@ uint32_t sunxi_get_spsr_for_bl33_entry(int aarch)
 	return spsr;
 }
 
-#define SRAM_VER_REG 0x01c00024
+#define SRAM_VER_REG 0x03006000
 
 uint16_t sunxi_get_socid(void)
 {
@@ -150,6 +150,6 @@ uint16_t sunxi_get_socid(void)
 	reg = mmio_read_32(SRAM_VER_REG);
 	mmio_write_32(SRAM_VER_REG, reg | (1 << 15));
 	reg = mmio_read_32(SRAM_VER_REG);
-	mmio_write_32(0x01c00024, reg & ~(1 << 15));
+	mmio_write_32(SRAM_VER_REG, reg & ~(1 << 15));
 	return reg >> 16;
 }

@@ -37,21 +37,21 @@
 #include "sunxi_def.h"
 #include "sunxi_private.h"
 
-#define SUN50I_PRCM_PBASE	(0x01F01400)
-#define SUN50I_CPUCFG_PBASE	(0x01700000)
-#define SUN50I_RCPUCFG_PBASE	(0x01F01C00)
+#define SUN50I_PRCM_PBASE	(0x07010000)
+#define SUN50I_CPUCFG_PBASE	(0x09010000)
+#define SUN50I_RCPUCFG_PBASE	(0x07000400)
  
 #define SUNXI_CPU_PWR_CLAMP(cluster, cpu)         (0x140 + (cluster*4 + cpu)*0x04)
 #define SUNXI_CLUSTER_PWROFF_GATING(cluster)      (0x100 + (cluster)*0x04)
 #define SUNXI_CLUSTER_PWRON_RESET(cluster)        (0x30  + (cluster)*0x04)
  
-#define SUNXI_DBG_REG0                            (0x20)
-#define SUNXI_CLUSTER_CPU_STATUS(cluster)         (0x30 + (cluster)*0x4)
-#define SUNXI_CPU_RST_CTRL(cluster)               (0x80 + (cluster)*0x4)
-#define SUNXI_CLUSTER_CTRL0(cluster)              (0x00 + (cluster)*0x10)
+#define SUNXI_DBG_REG0                            (0xc0)
+#define SUNXI_CLUSTER_CPU_STATUS(cluster)         (0x80 + (cluster)*0x4)
+#define SUNXI_CPU_RST_CTRL(cluster)               (0x00 + (cluster)*0x4)
+#define SUNXI_CLUSTER_CTRL0(cluster)              (0x10 + (cluster)*0x10)
  
-#define SUNXI_CPU_RVBA_L(cpu)	(0xA0 + (cpu)*0x8)
-#define SUNXI_CPU_RVBA_H(cpu)   (0xA4 + (cpu)*0x8)
+#define SUNXI_CPU_RVBA_L(cpu)	(0x40 + (cpu)*0x8)
+#define SUNXI_CPU_RVBA_H(cpu)   (0x44 + (cpu)*0x8)
  
 #define readl(x) mmio_read_32((x))
 #define writel(v, a)	 mmio_write_32((a), (v))

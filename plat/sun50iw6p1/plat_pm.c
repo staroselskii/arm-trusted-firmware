@@ -259,7 +259,8 @@ static int32_t sunxi_affinst_suspend_finish(uint64_t mpidr,
  ******************************************************************************/
 static void __dead2 sunxi_system_off(void)
 {
-	sunxi_pmic_write(0x32, sunxi_pmic_read(0x32) | 0x80);
+/* no PMIC usable as of now, but the AXP806 should turn off like this: */
+//	sunxi_pmic_write(0x32, sunxi_pmic_read(0x32) | 0x80);
 	ERROR("PSCI system shutdown: still alive ...\n");
 
 	wfi();
@@ -268,9 +269,9 @@ static void __dead2 sunxi_system_off(void)
 
 static void __dead2 sunxi_system_reset(void)
 {
-	mmio_write_32(0x01c20cb4, 1);
-	mmio_write_32(0x01c20cb8, 1);
-	mmio_write_32(0x01c20cb0, (0xa57 << 1) | 0x01);
+	mmio_write_32(0x030090b4, 1);
+	mmio_write_32(0x030090b8, 1);
+	mmio_write_32(0x030090b0, (0xa57 << 1) | 0x01);
 
 	wfi();
 	ERROR("Sunxi System Reset: operation not handled.\n");

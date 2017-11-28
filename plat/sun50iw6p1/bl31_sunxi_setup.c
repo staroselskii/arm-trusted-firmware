@@ -150,11 +150,11 @@ void bl31_early_platform_setup(bl31_params_t *from_bl2,
 	/* Initialize the console to provide early debug support */
 	console_init(SUNXI_UART0_BASE, UART0_CLK_IN_HZ, UART0_BAUDRATE);
 	load_addr = get_pc() & ~0xfff;
-	if (load_addr >= 0x44000 && load_addr < 0x54000) {
+	if (load_addr >= 0x104000 && load_addr < 0x118000) {
 		mem_name = "SRAM A2";
-	} else if (load_addr >= 0x10000 && load_addr < 0x18000) {
+	} else if (load_addr >= 0x20000 && load_addr < 0x28000) {
 		mem_name = "SRAM A1";
-	} else if (load_addr >= 0x18000 && load_addr < 0x40000) {
+	} else if (load_addr >= 0x28000 && load_addr < 0x46000) {
 		mem_name = "SRAM C";
 	} else if (load_addr >= 0x40000000)
 		mem_name = "DRAM";
@@ -162,11 +162,8 @@ void bl31_early_platform_setup(bl31_params_t *from_bl2,
 	soc_id = sunxi_get_socid();
 
 	switch (soc_id) {
-	case 0x1689:
-		soc_name = "A64/H64";
-		break;
-	case 0x1718:
-		soc_name = "H5";
+	case 0x1728:
+		soc_name = "H6";
 		break;
 	}
 
@@ -215,6 +212,8 @@ void bl31_early_platform_setup(bl31_params_t *from_bl2,
 	 * other platforms might have more programmable security devices
 	 * present.
 	 */
+
+	/* TODO: Where is the SPC on the H6? */
 	sunxi_security_setup();
 
 	/*
@@ -247,10 +246,7 @@ void bl31_platform_setup(void)
 	plat_setup_topology();
 
 	switch (socid) {
-	case 0x1689:
-		sunxi_pmic_setup();
-		break;
-	case 0x1718:
+	case 0x1728:			/* RSB on the H6? Or I2C to the AXP? */
 		break;
 	}
 

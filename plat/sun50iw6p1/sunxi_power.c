@@ -35,10 +35,11 @@
 #include "sunxi_def.h"
 #include "sunxi_private.h"
 
-#define R_PRCM_BASE	0x1f01400ULL
-#define R_TWI_BASE	0x1f02400ULL
-#define R_PIO_BASE	0x1f02c00ULL
+#define R_PRCM_BASE	0x7010000ULL
+#define R_TWI_BASE	0x7081400ULL
+#define R_PIO_BASE	0x7022000ULL
 
+/* No RSB in the H6? Manual does not mention MMIO base address. */
 #define RSB_BASE	0x1f03400ULL
 #define RSB_CTRL	0x00
 #define RSB_CCR		0x04
@@ -62,8 +63,9 @@
 
 #define BIT(n) (1U << (n))
 
-#define RUNTIME_ADDR	0x2d
-#define AXP803_HW_ADDR	0x3a3
+/* AXP 806 addresses */
+#define RUNTIME_ADDR	0x3a
+#define AXP806_HW_ADDR	0x745
 
 /* Initialize the RSB controller and its pins. */
 static int init_rsb(void)
@@ -251,26 +253,13 @@ static int pmic_setup(void)
 		}
 	}
 
-	/*
-	 * On the Pine64 the AXP is wired wrongly: to reset DCDC5 to 1.24V.
-	 * However the DDR3L chips require 1.36V instead. Fix this up. Other
-	 * boards hopefully do the right thing here and don't require any
-	 * changes. This should be further confined once we are able to
-	 * reliably detect a Pine64 board.
-	 */
-	ret = sunxi_pmic_read(0x24);	/* read DCDC5 register */
-	if ((ret & 0x7f) == 0x26) {	/* check for 1.24V value */
-		NOTICE("PMIC: fixing DRAM voltage from 1.24V to 1.36V\n");
-		sunxi_pmic_write(0x24, 0x2c);
-	}
- 
 	sunxi_pmic_write(0x15, 0x1a);	/* DLDO1 = VCC3V3_HDMI voltage = 3.3V */
 
 	return 0;
 }
 
 /*
- * Program the AXP803 via the RSB bus.
+ * Program the AXP806 via the RSB bus.
  */
 int sunxi_pmic_setup(void)
 {
@@ -285,7 +274,7 @@ int sunxi_pmic_setup(void)
 	}
 
 	if (ret != -EEXIST) {
-		ret = pmic_init(AXP803_HW_ADDR, RUNTIME_ADDR);
+		ret = pmic_init(AXP806_HW_ADDR, RUNTIME_ADDR);
 		if (ret) {
 			ERROR("Could not connect to AXP PMIC.\n");
 			return -2;

@@ -50,6 +50,8 @@
  */
 void sunxi_security_setup(void)
 {
+/* Where is the SPC controller on the H6? */
+#if 0
 	int i;
 
 	NOTICE("Configuring SPC Controller\n");
@@ -60,13 +62,14 @@ void sunxi_security_setup(void)
 
 	/* switch RSB to secure */
 	mmio_write_32(SPC_DECPORT_CLR_REG(3), 0x08);
+#endif
 	
 	/* set CCMU mbus_sec, bus_sec, pll_sec to non-secure */
-	mmio_write_32(0x01c20000+0x2f0, 0x7);
+	mmio_write_32(SUNXI_CCM_BASE + 0xf00, 0x7);
 
 	/* set R_PRCM power_sec, pll_sec, cpus_clk to non-secure */
-	mmio_write_32(0x01f01400+0x1d0, 0x7);
-	
+//	mmio_write_32(0x01f01400+0x1d0, 0x7);
+
 	/* Set DMA channels 0-7 to non-secure */
-	mmio_write_32(0x01c02000+0x20, 0xff);
+	mmio_write_32(0x03002000 + 0x20, 0xffff);
 }
