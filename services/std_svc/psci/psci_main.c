@@ -137,6 +137,9 @@ int psci_cpu_suspend(unsigned int power_state,
 
 int psci_cpu_off(void)
 {
+
+    ERROR("Hi in cpu_off\n");
+
 	int rc;
 	int target_afflvl = get_max_afflvl();
 

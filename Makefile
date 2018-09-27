@@ -41,7 +41,7 @@ VERSION_MINOR		:= 0
 # Build verbosity
 V			:= 0
 # Debug build
-DEBUG			:= 0
+DEBUG			:= 1
 # Build architecture
 ARCH 			:= aarch64
 # Build platform
@@ -85,7 +85,7 @@ ifneq (${DEBUG}, 0)
 else
 	BUILD_TYPE	:=	release
 	# Use LOG_LEVEL_NOTICE by default for release builds
-	LOG_LEVEL	:=	20
+	LOG_LEVEL	:=	50
 endif
 
 # Default build string (git branch and commit)

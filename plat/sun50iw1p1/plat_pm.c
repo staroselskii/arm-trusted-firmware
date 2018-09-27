@@ -181,6 +181,7 @@ static void sunxi_core_power_down_wfi(uint64_t mpidr)
 {
 	int cpu_nr = (mpidr >> MPIDR_AFF0_SHIFT) & MPIDR_AFFLVL_MASK;
 	int cluster_nr = (mpidr >> MPIDR_AFF1_SHIFT) & MPIDR_AFFLVL_MASK;
+	ERROR("Suspending stuff. mpidr: %u\n", mpidr);
 
 	sun50i_cpu_power_down(cluster_nr, cpu_nr);
 }
@@ -254,15 +255,84 @@ static int32_t sunxi_affinst_suspend_finish(uint64_t mpidr,
 	return sunxi_affinst_on_finish(mpidr, afflvl, state);
 }
 
+static void sunxi_wifi_off(void)
+{
+	uint32_t cfg = mmio_read_32(SUNXI_PIO_BASE + 0x48);
+    NOTICE("PC cfg0 before: 0x%x\n", cfg);
+    cfg &= ~(0x7 << 28);
+    cfg |= (0x1 << 28);
+	mmio_write_32(SUNXI_PIO_BASE + 0x48, cfg);
+
+	cfg = mmio_read_32(SUNXI_PIO_BASE + 0x48);
+    NOTICE("PC cfg0 after: 0x%x\n", cfg);
+
+	uint32_t data = mmio_read_32(SUNXI_PIO_BASE + 0x58);
+    NOTICE("PC before 0x%x\n", data);
+
+	data &= ~(0x01 << 7);
+	mmio_write_32(SUNXI_PIO_BASE + 0x58, data);
+	data = mmio_read_32(SUNXI_PIO_BASE + 0x58);
+    NOTICE("PC after 0x%x\n", data);
+
+}
+static void sunxi_emmc_off(void)
+{
+	uint32_t cfg = mmio_read_32(SUNXI_PIO_BASE + 0x50);
+    NOTICE("PC cfg2 before: 0x%x\n", cfg);
+    cfg &= ~(0x7 << 0);
+    cfg |= (0x1 << 0);
+	mmio_write_32(SUNXI_PIO_BASE + 0x50, cfg);
+
+	cfg = mmio_read_32(SUNXI_PIO_BASE + 0x50);
+    NOTICE("PC cfg2 after: 0x%x\n", cfg);
+
+	uint32_t data = mmio_read_32(SUNXI_PIO_BASE + 0x58);
+    NOTICE("PC before 0x%x\n", data);
+
+	data &= ~(0x01 << 16);
+	mmio_write_32(SUNXI_PIO_BASE + 0x58, data);
+	data = mmio_read_32(SUNXI_PIO_BASE + 0x58);
+    NOTICE("PC after 0x%x\n", data);
+
+}
+
+static void sunxi_dram_off(void)
+{
+	uint32_t port_d_cfg_1 = mmio_read_32(SUNXI_PIO_BASE + 0x70);
+    NOTICE("PD cfg1 before: 0x%x\n", port_d_cfg_1);
+    port_d_cfg_1 &= ~(0x7 << 12);
+    port_d_cfg_1 |= (0x1 << 12);
+	mmio_write_32(SUNXI_PIO_BASE + 0x70, port_d_cfg_1);
+
+	port_d_cfg_1 = mmio_read_32(SUNXI_PIO_BASE + 0x70);
+    NOTICE("PD cfg1 after: 0x%x\n", port_d_cfg_1);
+
+	uint32_t port_d_data = mmio_read_32(SUNXI_PIO_BASE + 0x7c);
+    NOTICE("PD before 0x%x\n", port_d_data);
+
+	port_d_data &= ~(0x01 << 11);
+	mmio_write_32(SUNXI_PIO_BASE + 0x7c, port_d_data);
+	port_d_data = mmio_read_32(SUNXI_PIO_BASE + 0x7c);
+    NOTICE("PD after 0x%x\n", port_d_data);
+}
+
 /*******************************************************************************
  * Sunxi handlers to shutdown/reboot the system
  ******************************************************************************/
 static void __dead2 sunxi_system_off(void)
 {
+    uint32_t soc_id = sunxi_get_socid();
+    ERROR("soc id 0x%x\n", soc_id);
+
+    sunxi_dram_off();
+    sunxi_emmc_off();
+    sunxi_wifi_off();
+
 	sunxi_pmic_write(0x32, sunxi_pmic_read(0x32) | 0x80);
 	ERROR("PSCI system shutdown: still alive ...\n");
 
 	wfi();
+	ERROR("Lol\n");
 	panic();
 }
 
