@@ -210,7 +210,6 @@ void sun50i_cpu_power_down(unsigned int cluster, unsigned int cpu)
 
 void sunxi_cpu_die(unsigned int cpu)
 {
-	#if 0
         unsigned long sctlr, cpuectlr;
 
         /* step1: Disable the data cache */
@@ -241,6 +240,5 @@ void sunxi_cpu_die(unsigned int cpu)
          * was cleared have completed
         */
         dsb();
-	#endif
 }
 

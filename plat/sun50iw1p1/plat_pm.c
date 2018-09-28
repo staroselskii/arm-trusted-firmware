@@ -45,6 +45,8 @@
 #include <console.h>
 #include <psci.h>
 
+#define R_PRCM_BASE	0x1f01400ULL
+
 bakery_lock_t plat_console_lock __attribute__ ((section("tzfw_coherent_mem")));
 
 /*******************************************************************************
@@ -181,7 +183,7 @@ static void sunxi_core_power_down_wfi(uint64_t mpidr)
 {
 	int cpu_nr = (mpidr >> MPIDR_AFF0_SHIFT) & MPIDR_AFFLVL_MASK;
 	int cluster_nr = (mpidr >> MPIDR_AFF1_SHIFT) & MPIDR_AFFLVL_MASK;
-	ERROR("Suspending stuff. mpidr: %u\n", mpidr);
+	ERROR("Suspending stuff. mpidr: %u cpu_nr: %d\n", mpidr, cpu_nr);
 
 	sun50i_cpu_power_down(cluster_nr, cpu_nr);
 }
@@ -296,6 +298,71 @@ static void sunxi_emmc_off(void)
 
 }
 
+static void sunxi_usb_off(void)
+{
+	mmio_write_32(0x01C20060, 0);
+	mmio_write_32(0x01C202c0, 0);
+}
+
+static void sunxi_random_stuff_off(void)
+{
+    uint32_t reg;
+
+
+
+    reg = mmio_read_32(0x01c20064);
+    NOTICE("REG1: 0x%x\n", reg);
+
+    reg = mmio_read_32(0x01c20068);
+    NOTICE("REG2: 0x%x\n", reg);
+	mmio_write_32(0x01C20068, 0);
+
+    reg = mmio_read_32(0x01c2006c);
+    NOTICE("REG3: 0x%x\n", reg);
+	mmio_write_32(0x01C2006c, 0x10000);
+
+    reg = mmio_read_32(0x01c20070);
+    NOTICE("REG4: 0x%x\n", reg);
+
+    reg = mmio_read_32(0x01c20074);
+    NOTICE("THS: 0x%x\n", reg);
+	mmio_write_32(0x01C20074, 0);
+
+    reg = mmio_read_32(0x01c20080);
+    NOTICE("NAND: 0x%x\n", reg);
+
+    reg = mmio_read_32(0x01c200b0);
+    NOTICE("I2S: 0x%x\n", reg);
+
+    reg = mmio_read_32(0x01c200b4);
+    NOTICE("PCM1: 0x%x\n", reg);
+
+    reg = mmio_read_32(0x01c202d0);
+    NOTICE("RST_REG3: 0x%x\n", reg);
+
+    reg = mmio_read_32(0x01c202d8);
+    NOTICE("RST_REG4: 0x%x\n", reg);
+	mmio_write_32(0x01C202d8, 0x10000); /* only UART0 */
+
+    reg = mmio_read_32(0x01c20150);
+    NOTICE("HDMI: 0x%x\n", reg);
+
+    reg = mmio_read_32(0x01c20154);
+    NOTICE("HDMI SLOW: 0x%x\n", reg);
+
+/*NOTICE:  REG2: 0x120
+NOTICE:  REG3: 0x10003
+NOTICE:  REG4: 0x0
+NOTICE:  THS: 0x80000000
+NOTICE:  NAND: 0x0
+NOTICE:  I2S: 0x0
+NOTICE:  PCM1: 0x0
+NOTICE:  RST_REG3: 0x100
+NOTICE:  RST_REG4: 0xb0003
+*/
+}
+
+
 static void sunxi_dram_off(void)
 {
 	uint32_t port_d_cfg_1 = mmio_read_32(SUNXI_PIO_BASE + 0x70);
@@ -316,6 +383,43 @@ static void sunxi_dram_off(void)
     NOTICE("PD after 0x%x\n", port_d_data);
 }
 
+static void mmio_clrsetbits32(uintptr_t addr, uint32_t mask, uint32_t bits)
+{
+	uint32_t regval = mmio_read_32(addr);
+
+	regval &= ~mask;
+	regval |= bits;
+	mmio_write_32(addr, regval);
+}
+
+static void sunxi_pwr_cpu0_down(void)
+{
+	uint32_t reg;
+
+	/* un-gate PIO clock */
+	reg = mmio_read_32(R_PRCM_BASE + 0x0100);
+	NOTICE("C0CPUX_PWROFF_GATING_REG: 0x%x\n",  reg);
+
+	reg = mmio_read_32(R_PRCM_BASE + 0x0104);
+	NOTICE("C1CPUX_PWROFF_GATING_REG: 0x%x\n",  reg);
+
+	reg = mmio_read_32(R_PRCM_BASE + 0x0118);
+	NOTICE("GPU: 0x%x\n",  reg);
+
+	reg = mmio_read_32(R_PRCM_BASE + 0x0140);
+	NOTICE("C0CPU3_PWR_SWITCH_REG: 0x%x\n",  reg);
+
+	reg = mmio_read_32(R_PRCM_BASE + 0x0144);
+	NOTICE("C0CPU3_PWR_SWITCH_REG: 0x%x\n",  reg);
+
+	reg = mmio_read_32(R_PRCM_BASE + 0x0148);
+	NOTICE("C0CPU3_PWR_SWITCH_REG: 0x%x\n",  reg);
+
+	reg = mmio_read_32(R_PRCM_BASE + 0x014c);
+	NOTICE("C0CPU3_PWR_SWITCH_REG: 0x%x\n",  reg);
+
+}
+
 /*******************************************************************************
  * Sunxi handlers to shutdown/reboot the system
  ******************************************************************************/
@@ -327,10 +431,15 @@ static void __dead2 sunxi_system_off(void)
     sunxi_dram_off();
     sunxi_emmc_off();
     sunxi_wifi_off();
+    sunxi_random_stuff_off();
+    sunxi_usb_off();
+	sunxi_pwr_cpu0_down();
 
 	sunxi_pmic_write(0x32, sunxi_pmic_read(0x32) | 0x80);
-	ERROR("PSCI system shutdown: still alive ...\n");
 
+    mmio_clrsetbits32(0x01C20050, 3U << 16, 0 << 16);
+	udelay(100);
+	ERROR("PSCI system shutdown: still alive ...\n");
 	wfi();
 	ERROR("Lol\n");
 	panic();
