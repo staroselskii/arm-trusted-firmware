@@ -396,7 +396,28 @@ static void sunxi_pwr_cpu0_down(void)
 {
 	uint32_t reg;
 
-	/* un-gate PIO clock */
+    mmio_clrsetbits32(R_PRCM_BASE + 0x0110, 1U << 12, 1 << 12);
+	reg = mmio_read_32(R_PRCM_BASE + 0x0110);
+	NOTICE("VDD_SYS: 0x%x\n",  reg);
+
+	reg = mmio_read_32(R_PRCM_BASE + 0x0160);
+	NOTICE("SP_STB: 0x%x\n",  reg);
+
+	reg = mmio_read_32(R_PRCM_BASE + 0x0120);
+	NOTICE("VDD_SYS_RES: 0x%x\n",  reg);
+	mmio_write_32(R_PRCM_BASE + 0x0120, 0x00);
+
+#if 0
+	return;
+
+	sun50i_cpu_power_down(0, 1);
+	sun50i_cpu_power_down(0, 2);
+	sun50i_cpu_power_down(0, 3);
+NOTICE("3 down");
+	sun50i_cpu_power_down(0, 0);
+NOTICE("No way");
+
+/*
 	reg = mmio_read_32(R_PRCM_BASE + 0x0100);
 	NOTICE("C0CPUX_PWROFF_GATING_REG: 0x%x\n",  reg);
 
@@ -406,18 +427,27 @@ static void sunxi_pwr_cpu0_down(void)
 	reg = mmio_read_32(R_PRCM_BASE + 0x0118);
 	NOTICE("GPU: 0x%x\n",  reg);
 
-	reg = mmio_read_32(R_PRCM_BASE + 0x0140);
-	NOTICE("C0CPU3_PWR_SWITCH_REG: 0x%x\n",  reg);
-
-	reg = mmio_read_32(R_PRCM_BASE + 0x0144);
-	NOTICE("C0CPU3_PWR_SWITCH_REG: 0x%x\n",  reg);
-
-	reg = mmio_read_32(R_PRCM_BASE + 0x0148);
-	NOTICE("C0CPU3_PWR_SWITCH_REG: 0x%x\n",  reg);
-
 	reg = mmio_read_32(R_PRCM_BASE + 0x014c);
 	NOTICE("C0CPU3_PWR_SWITCH_REG: 0x%x\n",  reg);
+	mmio_write_32(R_PRCM_BASE + 0x014c, 0xff);
 
+	reg = mmio_read_32(R_PRCM_BASE + 0x0144);
+	NOTICE("C0CPU1_PWR_SWITCH_REG: 0x%x\n",  reg);
+	mmio_write_32(R_PRCM_BASE + 0x0144, 0xff);
+
+	reg = mmio_read_32(R_PRCM_BASE + 0x0148);
+	NOTICE("C0CPU2_PWR_SWITCH_REG: 0x%x\n",  reg);
+	mmio_write_32(R_PRCM_BASE + 0x0148, 0xff);
+
+	reg = mmio_read_32(R_PRCM_BASE + 0x0140);
+	NOTICE("C0CPU0_PWR_SWITCH_REG: 0x%x\n",  reg);
+	mmio_write_32(R_PRCM_BASE + 0x0140, 0xff);
+
+	NOTICE("BEFORE SHUTTING THE FUCK DOWN");
+	mmio_write_32(R_PRCM_BASE + 0x0100, 0xf);
+
+*/
+#endif
 }
 
 /*******************************************************************************
@@ -433,12 +463,12 @@ static void __dead2 sunxi_system_off(void)
     sunxi_wifi_off();
     sunxi_random_stuff_off();
     sunxi_usb_off();
-	sunxi_pwr_cpu0_down();
 
 	sunxi_pmic_write(0x32, sunxi_pmic_read(0x32) | 0x80);
 
-    mmio_clrsetbits32(0x01C20050, 3U << 16, 0 << 16);
-	udelay(100);
+	sunxi_pwr_cpu0_down();
+//    mmio_clrsetbits32(0x01C20050, 3U << 16, 0 << 16);
+	udelay(1000);
 	ERROR("PSCI system shutdown: still alive ...\n");
 	wfi();
 	ERROR("Lol\n");
